@@ -41,8 +41,25 @@ fetch('data.json?'+Date.now()).then(r=>{if(!r.ok)throw new Error('data.json HTTP
  .catch(e=>{$('app').innerHTML='<div class="card"><b class="merah">Gagal memuat data:</b> '+esc(e.message)+'<br><small>Salin pesan ini ke Claude.</small></div>'});
 function draw(){try{$('app').innerHTML=html();bind()}catch(e){$('app').innerHTML='<div class="card"><b class="merah">Error tampilan:</b><pre>'+esc(e.stack||e.message)+'</pre></div>'}}
 
+
+// ===== Kalender makro (FOMC, CPI, NFP, opsi Deribit) =====
+const wibFmt=iso=>new Date(iso).toLocaleString('id-ID',{timeZone:'Asia/Jakarta',weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false});
+function relJam(iso){const h=(Date.parse(iso)-Date.now())/36e5,a=Math.abs(h),s=a<1?Math.round(a*60)+' menit':a<48?a.toFixed(1)+' jam':(a/24).toFixed(1)+' hari';return h>=0?s+' lagi':s+' lalu'}
+function makroBar(){const M=D.makro;if(!M)return '';if(M.galat)return '<div class="card"><b class="kuning">MAKRO</b> '+esc(M.galat)+'</div>';if(!M.berikut)return '';
+ const n=Date.now(),A=M.berikut.filter(e=>{const h=(Date.parse(e.utc)-n)/36e5;return e.impact!=='rendah'&&h<=72&&h>=-e.sesudahJam});
+ if(!A.length){const x=M.berikut.find(e=>Date.parse(e.utc)>n);return '<div class="card"><small>Kalender makro: tidak ada rilis berdampak dalam 72 jam.'+(x?' Berikutnya: '+esc(x.jenis)+' '+relJam(x.utc)+' ('+esc(wibFmt(x.utc))+' WIB).':'')+'</small></div>'}
+ return A.map(e=>{const h=(Date.parse(e.utc)-n)/36e5,c=e.impact==='tinggi'&&h<=24?(Math.abs(h)<=2?'merah':'kuning'):'info';
+  return `<div class="card"><b class="${c}">MAKRO</b> ${esc(e.nama)}: ${relJam(e.utc)} <small>(${esc(wibFmt(e.utc))} WIB)${c!=='info'?' · pertimbangkan tidak membuka scalp baru sampai reaksi pertama reda; limit dekat harga bisa terisi saat lonjakan':''}</small></div>`}).join('')}
+function makroHtml(){const M=D.makro;if(!M||!M.berikut)return '';
+ let h='<h2>Kalender makro</h2><div class="card" style="overflow-x:auto"><table><tr><th>Waktu (WIB)<th>Jenis<th>Dampak<th>Hitung mundur<th>Rilis</tr>';
+ for(const e of M.berikut)h+=`<tr><td>${esc(wibFmt(e.utc))}<td><b>${esc(e.jenis)}</b><td class="${e.impact==='tinggi'?'merah':e.impact==='sedang'?'kuning':'info'}">${esc(e.impact)}<td>${relJam(e.utc)}<td>${esc(e.nama)}</tr>`;
+ return h+'</table><small>Sumber: Fed &amp; BLS (data/events.json, versi '+esc(M.versi||'-')+'); risalah FOMC dan opsi Deribit dihitung dari aturan. Peringatan ini hanya informasi: mesin tidak diubah.</small></div>'}
+function makroUjiHtml(){const U=D.makro&&D.makro.uji;if(!U)return '';
+ const r=g=>esc(g.g)+': n='+g.n+', TP '+g.tp+', R/trade '+f(g.r)+(g.se!=null?' ± '+f(g.se):'');
+ return '<h2>Uji jendela event (hipotesis)</h2><div class="card">'+U.grup.map(r).join(' · ')+(U.perJenis.length?'<br>'+U.perJenis.map(r).join(' · '):'')+'<br><small>Jendela tinggi −'+U.jendela.sebelumJam.tinggi+'j/+'+U.jendela.sesudahJam.tinggi+'j, sedang −'+U.jendela.sebelumJam.sedang+'j/+'+U.jendela.sesudahJam.sedang+'j. '+esc(U.catatan)+'</small></div>'}
+
 const VC=v=>v.startsWith('LAYAK')?'ok':v.startsWith('BELUM LAYAK')?'merah':'kuning';
-function topBar(){let h='';const g=D.regime;
+function topBar(){let h='';const g=D.regime;h+=makroBar();
  if(g)h+=`<div class="card"><b class="${g.status==='NORMAL'?'ok':g.status==='EKSTREM'?'merah':'kuning'}">Pasar BTC: ${esc(g.status)}</b> ${esc(g.flags.join('; ')||'kondisi normal untuk scalping')}<br><small>rentang candle 1H ${f(g.rangeX)}x median 14 hari · volume ${f(g.volumeX)}x · arah 1H: ${esc(g.arah)} · sesi ${esc(g.sesi)} (WIB = UTC+7)</small></div>`;
  const m=D.warnings.filter(w=>w.lvl==='merah').length,k=D.warnings.filter(w=>w.lvl==='kuning').length;
  const bl=lapKolom().filter(l=>lapState(l).c==='biru').length;
@@ -116,7 +133,7 @@ function wibOf(u){const t=Date.parse(u.replace(' ','T')+':00Z');return isFinite(
 
 function uni(){if(!D.universeBad?.length)return '';return '<h2>Universe scanner: koin mencurigakan</h2><div class="card"><ul class="g">'+D.universeBad.map(b=>`<li><b>${esc(b.s)}</b> · ${esc(b.why.join('; '))}</li>`).join('')+'</ul></div>'}
 
-function html(){return '<div id="tb">'+topBar()+'</div>'+'<h2>Ringkasan per mesin</h2>'+cards()+'<h2>Perbandingan</h2>'+compare()+'<h2>Peringatan</h2>'+warns()+'<h2>Corong sinyal (sinyal → terisi → selesai)</h2>'+funnels()+'<h2>Sinyal menunggu / berjalan (harga Binance saat ini)</h2>'+pending()+'<h2>Kurva ekuitas</h2><div id="cv">'+curve()+'</div><h2>Bedah mesin</h2><div id="dt">'+detail()+'</div><h2>Uji silang simulator (candle 1 menit)</h2>'+audit()+uni()+'<h2>Jurnal forward</h2><div id="jr">'+jurnal()+'</div><h2>Laporan untuk Claude</h2><div id="lp">'+lapHtml()+'</div>'}
+function html(){return '<div id="tb">'+topBar()+'</div>'+'<h2>Ringkasan per mesin</h2>'+cards()+'<h2>Perbandingan</h2>'+compare()+makroHtml()+'<h2>Peringatan</h2>'+warns()+makroUjiHtml()+'<h2>Corong sinyal (sinyal → terisi → selesai)</h2>'+funnels()+'<h2>Sinyal menunggu / berjalan (harga Binance saat ini)</h2>'+pending()+'<h2>Kurva ekuitas</h2><div id="cv">'+curve()+'</div><h2>Bedah mesin</h2><div id="dt">'+detail()+'</div><h2>Uji silang simulator (candle 1 menit)</h2>'+audit()+uni()+'<h2>Jurnal forward</h2><div id="jr">'+jurnal()+'</div><h2>Laporan untuk Claude</h2><div id="lp">'+lapHtml()+'</div>'}
 
 function bind(){
  document.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{cur=+b.dataset.e;LS.set('cur',cur);draw()});

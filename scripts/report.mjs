@@ -30,6 +30,7 @@ export function buildReport(out, C) {
   if (out.regime) m += `\n## Kondisi pasar\n- ${out.regime.status}${out.regime.flags.length ? ' (' + out.regime.flags.join('; ') + ')' : ''}; BTC ${f2(out.regime.btc, 0)}, arah 1H ${out.regime.arah}, rentang 24 jam ${f2(out.regime.range24, 2)}% per candle, sesi ${out.regime.sesi}\n`;
   m += `\n## Sinyal menunggu / berjalan\n` + (out.pending.map(p => `- ${p.e} ${p.s} ${p.d} ${p.sg} entry ${p.en} harga ${p.px ?? '-'}: ${p.ket}`).join('\n') || '- tidak ada') + '\n';
   m += `\n## Warning\n` + out.warnings.map(w => `- [${w.lvl}] ${w.e}: ${w.t}${w.aksi ? ' -> ' + w.aksi : ''}`).join('\n') + '\n';
+  m += out.makroMd || '';
   m += `\n## Permintaan\nEvaluasi laporan ini. Jujur soal sampel kecil, korelasi antar koin, dan rezim pasar. Jangan ubah logika sinyal mesin selama forward test berjalan tanpa memulai protokol baru (config_hash baru). Jika perlu perbaikan, buatkan full coding (zip utuh siap upload ke GitHub web UI) dan sebutkan apa yang diuji ulang.\n`;
   return m;
 }

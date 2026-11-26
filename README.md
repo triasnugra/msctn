@@ -77,3 +77,10 @@ node --test "test/*.test.mjs"                          # termasuk test/sctnv4.te
 python3 test/parity_v4.py <folder sctnv4-main>         # simulatePy (JS) = simulate_trade (Python sctnv4), 400 skenario acak
 node test/offline_v4.mjs                               # build ujung-ke-ujung sctnv4 dengan history & Binance palsu
 ```
+
+## Kalender makro (v6)
+`scripts/makro.mjs` + `data/events.json`: peringatan ke depan untuk FOMC (keputusan + risalah), CPI, NFP, dan kedaluwarsa opsi Deribit (Jumat terakhir 08:00 UTC; kuartalan Mar/Jun/Sep/Des = besar). Tampil sebagai banner di atas, tabel "Kalender makro", baris di Peringatan (info ≤72 jam, kuning ≤24 jam, merah ±2 jam dari rilis), dan blok di "Laporan untuk Claude".
+- **Uji jendela event** (hipotesis): R/trade trade yang masuk -4j/+8j dari rilis tinggi (atau -2j/+4j dari sedang) vs di luar jendela, plus per jenis, dengan galat baku. Waktu acuan = saat entry terisi. Jangan jadikan aturan sebelum puluhan trade per grup.
+- **Perawatan**: edit `data/events.json` (format `et` = waktu New York). Sumber resmi: federalreserve.gov/monetarypolicy/fomccalendars.htm dan bls.gov/schedule. Peringatan kuning muncul bila kalender tinggal <21 hari. Tanggal FOMC 2027 tentatif (jadwal diubah Fed 12 Nov 2026). PPI/PCE belum dimasukkan; tambahkan manual bila perlu.
+- Ambang di `config.json` bagian `makro`. Mesin tidak diubah; ini hanya peringatan dan label uji.
+- Uji unit: `test/makro.test.mjs` (konversi ET→UTC/DST, kalender, peringatan, uji jendela).

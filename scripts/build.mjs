@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import { loadEngine, lastCommitMs, normForward, normBacktest, normHistory, applyCost, cfgHash, mergeArchive } from './load.mjs';
 import { perf, funnel, breakdown, levels, leaveOut, costCurve, gates, fingerprint, isClosed, sesi, skorBucket, hari, stopBucket } from './metrics.mjs';
+import { macroLayer } from './makro.mjs';
 import * as live from './live.mjs';
 import { H, DAY, f2, pct, iso, median, dayOf, wibDay } from './lib.mjs';
 import { buildLog, recon } from './laporan-log.mjs';
@@ -274,6 +275,14 @@ for (const e of out.engines) {
   e.verdict = !f.n ? 'BELUM ADA TRADE' : e.gates.layak ? 'LAYAK UJI UANG NYATA (RISIKO KECIL)' : f.n < 30 ? 'SAMPEL TERLALU KECIL' : 'BELUM LAYAK';
   if (e.bt) delete e.bt._rows;
   delete e._all; delete e._fw;
+}
+// Kalender makro (FOMC/CPI/NFP/opsi Deribit): peringatan ke depan + uji jendela event. Tidak mengubah mesin.
+{
+  const trades = [];
+  for (const [id, rows] of Object.entries(ALLT)) for (const t of rows) if (isClosed(t)) trades.push({ e: id, t: t.fill ?? t.asof, r: t.r, tp: t.r > 0 });
+  const EVM = macroLayer({ cfg: C.makro, now: NOW, trades });
+  out.makro = EVM.makro; out.makroMd = EVM.md;
+  for (const w of EVM.warnings) W(w.lvl, w.e, w.t, w.aksi);
 }
 const order = { merah: 0, kuning: 1, info: 2 };
 out.warnings.sort((a, b) => order[a.lvl] - order[b.lvl]);
