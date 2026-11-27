@@ -2,8 +2,8 @@
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Monitor Scalping</title>
 <style>
-:root{--bg:#fff;--fg:#17181c;--mu:#667;--bd:#dfe1e6;--c:#f6f7f9;--r:#b3261e;--y:#8a5a00;--g:#16794a;--b:#2456d6;--s1:#2456d6;--s2:#c2410c;--s3:#0f766e;--bar:#c9ced8}
-@media(prefers-color-scheme:dark){:root{--bg:#101114;--fg:#eceef2;--mu:#98a0ad;--bd:#2c2f36;--c:#181a1f;--r:#ff8277;--y:#f0c060;--g:#4cc38a;--b:#7aa2ff;--s1:#7aa2ff;--s2:#ff9a5c;--s3:#4fd1c5;--bar:#3a3f4a}}
+:root{--bg:#fff;--fg:#17181c;--mu:#667;--bd:#dfe1e6;--c:#f6f7f9;--r:#b3261e;--y:#8a5a00;--g:#16794a;--b:#2456d6;--s1:#2456d6;--s2:#c2410c;--s3:#0f766e;--s4:#a21caf;--bar:#c9ced8}
+@media(prefers-color-scheme:dark){:root{--bg:#101114;--fg:#eceef2;--mu:#98a0ad;--bd:#2c2f36;--c:#181a1f;--r:#ff8277;--y:#f0c060;--g:#4cc38a;--b:#7aa2ff;--s1:#7aa2ff;--s2:#ff9a5c;--s3:#4fd1c5;--s4:#e879f9;--bar:#3a3f4a}}
 *{box-sizing:border-box}body{margin:0 auto;padding:12px 16px 40px;font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--fg);max-width:1180px}
 h1{font-size:19px;margin:6px 0 2px}h2{font-size:15px;margin:26px 0 8px;padding-top:6px;border-top:1px solid var(--bd)}h3{font-size:13px;margin:14px 0 6px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
 small,.mu{color:var(--mu)}.card{background:var(--c);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin:8px 0}
@@ -31,7 +31,7 @@ const f=(x,d=2)=>x==null||!isFinite(x)?'-':(+x).toFixed(d),pc=(x,d=0)=>x==null?'
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sg=x=>x==null?'':x>0?'pos':x<0?'neg':'';
 const R=(x,d=2)=>x==null?'-':`<span class="${sg(x)}">${x>0?'+':''}${f(x,d)}</span>`;
-const COL=['var(--s1)','var(--s2)','var(--s3)'];
+const COL=['var(--s1)','var(--s2)','var(--s3)','var(--s4)'];
 let D=null,cur=0,mode='fwd',curveMode='bt',jq='',jst='';
 const LS={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
 cur=+(LS.get('cur')||0);mode=LS.get('mode')||'fwd';
@@ -68,7 +68,7 @@ function topBar(){let h='';const g=D.regime;h+=makroBar();
  h+=`<div class="card">Peringatan: <b class="merah">${m} merah</b> · <b class="kuning">${k} kuning</b> · ${D.warnings.length-m-k} info <small>(rinci di bagian Peringatan)</small></div>`;return h}
 
 function cards(){return '<div class="grid">'+D.engines.map((e,i)=>{const p=e.fwd,fl=e.funnel;
- return `<div class="card"><b style="color:${COL[i%3]}">${esc(e.nama)}</b> <span class="tag ${VC(e.verdict)}">${esc(e.verdict)}</span>
+ return `<div class="card"><b style="color:${COL[i%COL.length]}">${esc(e.nama)}</b> <span class="tag ${VC(e.verdict)}">${esc(e.verdict)}</span>
  <div class="kpi"><div><b>${p.n}</b><span>trade selesai (forward)</span></div><div><b>${R(p.avg)}</b><span>R/trade</span></div><div><b>${f(p.pf)}</b><span>profit factor</span></div>
  <div><b>${pc(fl.fillRate)}</b><span>sinyal terisi</span></div><div><b>${pc(p.winRate)}</b><span>win rate</span></div><div><b>${f(p.hold?.med,1)} j</b><span>median tahan</span></div></div>
  <ul class="g">${e.gates.list.map(x=>`<li class="${x[0]?'ok':'merah'}">${x[0]?'✔':'✖'} ${esc(x[1])}</li>`).join('')}</ul></div>`}).join('')+'</div>'}
@@ -92,7 +92,7 @@ function pending(){if(!D.pending.length)return '<div class="card">Tidak ada siny
 
 // ---- kurva ekuitas: SVG, label langsung di ujung garis ----
 function curve(){const key=curveMode==='bt'?'bt':'fwd';
- const S=D.engines.map((e,i)=>({id:e.id,c:COL[i%3],pts:(key==='bt'?e.bt?.curve:e.fwd.curve)||[]})).filter(s=>s.pts.length);
+ const S=D.engines.map((e,i)=>({id:e.id,c:COL[i%COL.length],pts:(key==='bt'?e.bt?.curve:e.fwd.curve)||[]})).filter(s=>s.pts.length);
  const btn=['bt','fwd'].map(k=>`<button class="${curveMode===k?'on':''}" data-cm="${k}">${k==='bt'?'Backtest':'Forward'}</button>`).join('');
  if(!S.length)return btn+'<div class="card">Belum ada trade selesai pada mode ini.</div>';
  const W=900,Hh=260,L=44,Rr=130,T=12,B=22,all=S.flatMap(s=>s.pts),x0=Math.min(...all.map(p=>p[0])),x1=Math.max(...all.map(p=>p[0]),x0+1),y0=Math.min(0,...all.map(p=>p[1])),y1=Math.max(0.5,...all.map(p=>p[1]));
