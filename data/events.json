@@ -1,6 +1,6 @@
 {
  "versi": "2026-11-27",
- "catatan": "Waktu 'et' = waktu Eastern (New York); kode mengubahnya ke UTC dengan aturan DST AS. Tanggal 2027 FOMC TENTATIF (Fed: tiap tanggal dikonfirmasi pada rapat sebelumnya); jadwal 2027 diubah 12 Nov 2026: rapat Desember dipindah ke 16-17 Nov dan 26-27 Okt tanpa keputusan. Risalah FOMC (3 minggu sesudah keputusan) dan opsi Deribit (Jumat terakhir tiap bulan 08:00 UTC; kuartalan = Mar/Jun/Sep/Des) dihitung otomatis oleh kode. PPI, PCE, dan rilis lain belum dimasukkan: tambahkan manual bila perlu.",
+ "catatan": "CADANGAN + RIWAYAT. Tiap build, scripts/kalender-sync.mjs mengambil jadwal resmi terbaru dari bls.gov (CPI, NFP) dan federalreserve.gov (FOMC) lalu menggantikan tanggal di file ini dari tanggal pertama yang dimuat sumber dan seterusnya; file ini dipakai bila sumber gagal/diblok dan untuk tanggal yang sudah lewat. Waktu 'et' = waktu New York (kode mengubahnya ke UTC dengan aturan DST AS). Risalah FOMC (3 minggu setelah keputusan) dan opsi Deribit (Jumat terakhir tiap bulan 08:00 UTC; kuartalan Mar/Jun/Sep/Des) dihitung oleh kode dan berlanjut otomatis. PPI, PCE, dan rilis lain belum ada.",
  "events": [
   {
    "id": "nfp-2026-10-02",

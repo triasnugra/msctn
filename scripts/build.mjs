@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import { loadEngine, lastCommitMs, normForward, normBacktest, normHistory, applyCost, cfgHash, mergeArchive } from './load.mjs';
 import { perf, funnel, breakdown, levels, leaveOut, costCurve, gates, fingerprint, isClosed, sesi, skorBucket, hari, stopBucket } from './metrics.mjs';
 import { macroLayer } from './makro.mjs';
+import { syncKalender } from './kalender-sync.mjs';
 import * as live from './live.mjs';
 import { H, DAY, f2, pct, iso, median, dayOf, wibDay } from './lib.mjs';
 import { buildLog, recon } from './laporan-log.mjs';
@@ -280,7 +281,9 @@ for (const e of out.engines) {
 {
   const trades = [];
   for (const [id, rows] of Object.entries(ALLT)) for (const t of rows) if (isClosed(t)) trades.push({ e: id, t: t.fill ?? t.asof, r: t.r, tp: t.r > 0 });
-  const EVM = macroLayer({ cfg: C.makro, now: NOW, trades });
+  const SYNC = await syncKalender({ cfg: C.makro?.sinkron, now: NOW, cacheUrl: `https://${C.owner}.github.io/${C.monitorRepo}/kalender-auto.json`, local: !ONLINE && process.env.FORCE_SYNC !== '1' });
+  if (SYNC.simpan) { fs.mkdirSync('site', { recursive: true }); fs.writeFileSync('site/kalender-auto.json', JSON.stringify(SYNC.simpan)); }
+  const EVM = macroLayer({ cfg: C.makro, now: NOW, auto: SYNC, trades });
   out.makro = EVM.makro; out.makroMd = EVM.md;
   for (const w of EVM.warnings) W(w.lvl, w.e, w.t, w.aksi);
 }
