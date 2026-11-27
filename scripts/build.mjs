@@ -273,7 +273,7 @@ if (REG && REG.status !== 'NORMAL') W(REG.status === 'EKSTREM' ? 'kuning' : 'inf
 // ---------- 8. Ringkas & tulis ----------
 for (const e of out.engines) {
   const f = e.fwd;
-  e.verdict = !f.n ? 'BELUM ADA TRADE' : e.gates.layak ? 'LAYAK UJI UANG NYATA (RISIKO KECIL)' : f.n < 30 ? 'SAMPEL TERLALU KECIL' : 'BELUM LAYAK';
+  e.verdict = !f.n ? (e.funnel.OPEN + e.funnel.WAITING > 0 ? `BELUM ADA TRADE SELESAI (${e.funnel.OPEN + e.funnel.WAITING} sinyal berjalan)` : 'BELUM ADA TRADE') : e.gates.layak ? 'LAYAK UJI UANG NYATA (RISIKO KECIL)' : f.n < 30 ? 'SAMPEL TERLALU KECIL' : 'BELUM LAYAK';
   if (e.bt) delete e.bt._rows;
   delete e._all; delete e._fw;
 }
